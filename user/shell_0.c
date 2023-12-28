@@ -7,14 +7,14 @@
 #include <proto.h>
 #include <stdio.h>
 
-#define assert(expected)                                     \
- do {                                                        \
-  if (expected) { break; }                                   \
-  const char *file = __FILE__;                               \
-  int         line = __LINE__;                               \
-  const char *expr = #expected;                              \
-  printf("%s:%d: assertion failed: %s\n", file, line, expr); \
-  __asm__ volatile("hlt");                                   \
+#define assert(expected)                                    \
+ do {                                                       \
+  if (expected) { break; }                                  \
+  const char *file = __FILE__;                              \
+  int         line = __LINE__;                              \
+  const char *expr = #expected;                             \
+  printf("assertion failed:%s:%d: %s\n", file, line, expr); \
+  while (true) { sleep(1000); }                             \
  } while (0);
 
 #define CHECK_PTR(p) assert((p) != NULL)
@@ -156,6 +156,18 @@ void print_exec_info(int argc, char **argv) {
     printf("}\n");
 }
 
+bool route(int argc, char *argv[]) {
+    assert(argc > 0 && argv != NULL);
+    if (argc == 1 && strcmp(argv[0], "exit") == 0) {
+        exit(0);
+        assert(false && "unreachable");
+    } else if (strcmp(argv[0], "parse-cmd") == 0) {
+        print_exec_info(argc - 1, argv + 1);
+        return true;
+    }
+    return false;
+}
+
 int main(int arg, char *argv[]) {
     setup_for_all_tty();
 
@@ -164,19 +176,22 @@ int main(int arg, char *argv[]) {
         printf("miniOS:/ $ ");
         gets(buf);
 
-        int    argc = 0;
-        char **argv = NULL;
-        bool   ok   = arg_from_cmdline(buf, &argc, &argv);
+        int    cmd_argc = 0;
+        char **cmd_argv = NULL;
+        bool   ok       = arg_from_cmdline(buf, &cmd_argc, &cmd_argv);
         if (!ok) { continue; }
 
-        print_exec_info(argc, argv);
-
-        if (exec(buf) != 0) {
-            printf("exec failed: file not found!\n");
-            continue;
+        ok = route(cmd_argc, cmd_argv);
+        if (!ok) {
+            if (exec(buf) != 0) {
+                printf("exec failed: file not found!\n");
+                continue;
+            } else {
+                printf("unknown command: `%s`\n", buf);
+            }
         }
 
-        int n = arg_free(argv);
-        assert(n == argc);
+        int n = arg_free(cmd_argv);
+        assert(n == cmd_argc);
     }
 }

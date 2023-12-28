@@ -123,7 +123,7 @@ $(IMAGE): \
 	@dd if=$(OBJDIR)/fs_flags/orange_flag.bin of=$@ bs=1 count=1 seek=$(ORANGE_FS_START_OFFSET) conv=notrunc
 	@dd if=$(OBJDIR)/fs_flags/fat32_flag.bin of=$@ bs=1 count=11 seek=$(FAT32_FS_START_OFFSET) conv=notrunc
 
-run: $(IMAGE)
+run: clean $(IMAGE)
 	@$(QEMU) $(QEMU_FLAGS) -drive file=$(IMAGE),format=raw
 .PHONY: run
 

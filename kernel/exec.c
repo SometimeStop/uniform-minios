@@ -12,6 +12,7 @@
 #include <fs.h> //added by mingxuan 2019-5-19
 #include <unios/vfs.h>
 #include <memman.h>
+#include <stdio.h>
 
 static u32 exec_elfcpy(u32 fd, Elf32_Phdr Echo_Phdr, u32 attribute);
 static u32 exec_load(
@@ -59,7 +60,13 @@ u32 sys_exec(char* path) {
 
     /*************根据elf的program复制文件信息**************/
     if (-1 == exec_load(fd, Echo_Ehdr, Echo_Phdr))
+    {
+        real_close(fd); // added by mingxuan 2019-5-23
+        if (Echo_Ehdr != NULL) sys_free(Echo_Ehdr);
+        if (Echo_Phdr != NULL) sys_free(Echo_Phdr);
         return -1; // 使用了const指针传递
+    }
+        
     
     /*****************重新初始化该进程的进程表信息（包括LDT）、线性地址布局、进程树属性********************/
     exec_pcb_init(path);
@@ -176,7 +183,15 @@ static u32 exec_load(
     // (This is
     // bullshit)我们还不能确定elf中一共能有几个program，但就目前我们查看过的elf文件中，只出现过两中program，一种.text（R-E）和一种.data（RW-）
     // 上面一句话导致了去年出现了诡异的错误，暂时只能说简单修复了一下，但是这个系统的权限就很混乱
-    // BULL SHIT! 
+    // BULL SHIT!
+    PH_INFO* old_ph_info = p_proc_current->task.memmap.ph_info;
+    PH_INFO* to_delete_ph_info = NULL;
+    while (old_ph_info != NULL) {
+        to_delete_ph_info = old_ph_info;
+        sys_free(to_delete_ph_info);
+        old_ph_info = old_ph_info->next;
+    } 
+    p_proc_current->task.memmap.ph_info = NULL;
     for (ph_num = 0; ph_num < Echo_Ehdr->e_phnum; ph_num++) {
         if (0 == Echo_Phdr[ph_num].p_memsz) { // 最后一个program
             break;
@@ -186,7 +201,7 @@ static u32 exec_load(
         {          //.text
             exec_elfcpy(
                 fd, Echo_Phdr[ph_num], PG_P | PG_USU | PG_RWR); // 进程代码段
-            PH_INFO* new_ph_info = (PH_INFO *)do_kmalloc(sizeof(PH_INFO));
+            PH_INFO* new_ph_info = sys_kmalloc(sizeof(PH_INFO));
             new_ph_info->lin_addr_base = Echo_Phdr[ph_num].p_vaddr;
             new_ph_info->lin_addr_limit = Echo_Phdr[ph_num].p_vaddr + Echo_Phdr[ph_num].p_memsz;
             if (p_proc_current->task.memmap.ph_info == NULL) {
@@ -209,7 +224,7 @@ static u32 exec_load(
         {                                           //.data
             exec_elfcpy(
                 fd, Echo_Phdr[ph_num], PG_P | PG_USU | PG_RWW); // 进程数据段
-            PH_INFO* new_ph_info = (PH_INFO *)do_kmalloc(sizeof(PH_INFO));
+            PH_INFO* new_ph_info = (PH_INFO *)sys_kmalloc(sizeof(PH_INFO));
             new_ph_info->lin_addr_base = Echo_Phdr[ph_num].p_vaddr;
             new_ph_info->lin_addr_limit = Echo_Phdr[ph_num].p_vaddr + Echo_Phdr[ph_num].p_memsz;
             if (p_proc_current->task.memmap.ph_info == NULL) {

@@ -175,23 +175,23 @@ int main(int arg, char *argv[]) {
     while (1) {
         printf("miniOS:/ $ ");
         gets(buf);
+        exec(buf);
+        // int    cmd_argc = 0;
+        // char **cmd_argv = NULL;
+        // bool   ok       = arg_from_cmdline(buf, &cmd_argc, &cmd_argv);
+        // if (!ok) { continue; }
 
-        int    cmd_argc = 0;
-        char **cmd_argv = NULL;
-        bool   ok       = arg_from_cmdline(buf, &cmd_argc, &cmd_argv);
-        if (!ok) { continue; }
+        // ok = route(cmd_argc, cmd_argv);
+        // if (!ok) {
+        //     if (exec(buf) != 0) {
+        //         printf("exec failed: file not found!\n");
+        //         continue;
+        //     } else {
+        //         printf("unknown command: `%s`\n", buf);
+        //     }
+        // }
 
-        ok = route(cmd_argc, cmd_argv);
-        if (!ok) {
-            if (exec(buf) != 0) {
-                printf("exec failed: file not found!\n");
-                continue;
-            } else {
-                printf("unknown command: `%s`\n", buf);
-            }
-        }
-
-        int n = arg_free(cmd_argv);
-        assert(n == cmd_argc);
+        // int n = arg_free(cmd_argv);
+        // assert(n == cmd_argc);
     }
 }

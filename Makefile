@@ -42,7 +42,7 @@ QEMU ?= qemu-system-i386
 QEMU_FLAGS := -boot order=a
 QEMU_FLAGS += -serial file:stdout.log
 QEMU_FLAGS += -m 128m
-QEMU_FLAGS += -display curses
+# QEMU_FLAGS += -display curses
 
 GDB ?= gdb
 

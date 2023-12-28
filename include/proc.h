@@ -126,10 +126,10 @@ typedef struct s_ph_info
 
 
 typedef struct s_lin_memmap { // 线性地址分布结构体	edit by visual 2016.5.25
-    // u32 text_lin_base;        // 代码段基址// BULL SHIT
+    // u32 text_lin_base;        // 代码段基址// BULL SHIT!!!!!
     // u32 text_lin_limit;       // 代码段界限
 
-    // u32 data_lin_base;  // 数据段基址// BULL SHIT
+    // u32 data_lin_base;  // 数据段基址// BULL SHIT!!!!!
     // u32 data_lin_limit; // 数据段界限
 
     PH_INFO* ph_info;

@@ -2,6 +2,9 @@ extern main
 extern exit
 bits 32
 
+[section .data]
+db 0x90
+
 [section .text]
 
 global _start

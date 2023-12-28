@@ -14,7 +14,7 @@
   int         line = __LINE__;                              \
   const char *expr = #expected;                             \
   printf("assertion failed:%s:%d: %s\n", file, line, expr); \
-  __asm__ volatile("hlt");                                  \
+  while (true) { sleep(1000); }                             \
  } while (0);
 
 void setup_for_all_tty() {
@@ -43,6 +43,8 @@ int main(int arg, char *argv[]) {
         printf("miniOS:/ $ ");
         gets(buf);
         if (strlen(buf) == 0) { continue; }
+        //! TODO: to be completed
+        if (strstr(buf, "exit") != NULL) { return -1; }
         if (exec(buf) != 0) {
             printf("exec failed: file not found!\n");
             continue;

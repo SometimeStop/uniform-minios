@@ -24,19 +24,17 @@ added by xw, 18/4/27
 
 int main(int arg, char *argv[]) {
 
-    // char tty[MAX_PATH] = {};
-    // for (int nr_tty = 0; nr_tty < 3; nr_tty++) {
-    //     snprintf(tty, sizeof(tty), "/dev_tty%d", nr_tty);
-    //     int stdin  = open(tty, O_RDWR);
-    //     int stdout = open(tty, O_RDWR);
-    //     int stderr = open(tty, O_RDWR);
-    // }
     int i = 0;
-    // global ++;
+    global ++;
     int j = 0;
+    
+    // printf("exec!");
+    // if (exec("/orange/ptTest.bin") == -1) {
+    //     printf("good ");// test good's mental state
+    // }// test exec
 
-    printf("good\n");
-    while (i < 3) {
+    // test fork begin
+    while (i < 13) {
         
         if (fork() == 0) {
             i++;
@@ -48,9 +46,11 @@ int main(int arg, char *argv[]) {
         j++;
         if (j == 100000000) {
             j = 0;
-            printf("i am %d", i);
+            global = 2;
+            printf("i am %d global = %d\n", i, global);
         }
     }
+    // test fork end
     pthread(pthread_test1);
     while (1) {
         printf("init");

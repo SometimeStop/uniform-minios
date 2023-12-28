@@ -167,11 +167,12 @@ bool route(int argc, char *argv[]) {
     }
     return false;
 }
-
+int ggg = 0;
 int main(int arg, char *argv[]) {
     setup_for_all_tty();
 
     char buf[MAX_PATH] = {};
+    ggg++;
     while (1) {
         printf("miniOS:/ $ ");
         gets(buf);

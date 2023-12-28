@@ -154,3 +154,45 @@ int do_vdelete(char *path) {
 再者就是小提一嘴那诸天神佛都畏惧的混沌依赖关系。尽管把最多的引用都放到了源文件，但还是不可避免地出现了循环引用，最终还是不得不用前置声明来解决问题。
 
 岂可修！
+
+# 猴子掰苞谷
+
+一个elf执行的时候加载三四个LOAD段，你记录加载段的地址上下界限的时候加载一个LOAD改一次，等所有LOAD加载完了发现第一个LOAD段的地址上下限已经被最后一个LOAD段给改完了，好家伙好家伙，怪不得每次fork都会丢data段，原来父进程只保证了自己是对的，自己的pcb压根都没有记录全部的LOAD段信息，这让释放的时候怎么释放？子进程如何fork，我的评价是fork不了一点。
+
+贴上原汁原味的源代码
+
+```c
+//in exec.c
+
+    for (ph_num = 0; ph_num < Echo_Ehdr->e_phnum; ph_num++) {
+
+//假设我们的ph段只有两个LOAD，好，很完美，都加载了，fork也正常
+//但如果有三个，第三次循环的时候要么把text_lin_base覆盖掉，要么把data_lin_base和data_lin_limit覆盖掉
+//这不就猴子掰苞谷，改一点丢一点。。。。。。十三点
+
+        if (0 == Echo_Phdr[ph_num].p_memsz) { 
+            break;
+        }
+        if (Echo_Phdr[ph_num].p_flags
+            & 0x1) // xx1，__E, executable seg must be code seg
+        {          //.text
+            exec_elfcpy(
+                fd, Echo_Phdr[ph_num], PG_P | PG_USU | PG_RWR); 
+            p_proc_current->task.memmap.text_lin_base =
+                Echo_Phdr[ph_num].p_vaddr;
+            p_proc_current->task.memmap.text_lin_limit =
+                Echo_Phdr[ph_num].p_vaddr + Echo_Phdr[ph_num].p_memsz;
+        } else if (Echo_Phdr[ph_num].p_flags & 0x4) 
+        {                                           
+            exec_elfcpy(
+                fd, Echo_Phdr[ph_num], PG_P | PG_USU | PG_RWW);
+            p_proc_current->task.memmap.data_lin_base =
+                Echo_Phdr[ph_num].p_vaddr;
+            p_proc_current->task.memmap.data_lin_limit =
+                Echo_Phdr[ph_num].p_vaddr + Echo_Phdr[ph_num].p_memsz;
+        } else {
+            vga_write_str_color("exec_load: unKnown elf'program!", 0x74);
+            return -1;
+        }
+    }
+```
